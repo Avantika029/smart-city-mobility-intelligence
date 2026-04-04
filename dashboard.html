@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart City Mobility Intelligence — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1117;--bg2:#161b27;--bg3:#1e2535;--border:rgba(255,255,255,0.07);--text:#e8eaf0;--muted:#7a8099;--blue:#3b82f6;--teal:#14b8a6;--amber:#f59e0b;--red:#ef4444;--green:#22c55e;--purple:#a78bfa;--coral:#f97316}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.header-title{font-size:15px;font-weight:600}
+.header-sub{font-size:12px;color:var(--muted);margin-left:8px}
+.live-badge{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:5px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.filters{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.filter-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 14px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s}
+.filter-btn:hover,.filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+select.fs{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none}
+select.fs option{background:var(--bg2)}
+.main{padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:rgba(255,255,255,.15)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.blue::before{background:var(--blue)}.kpi.teal::before{background:var(--teal)}
+.kpi.amber::before{background:var(--amber)}.kpi.red::before{background:var(--red)}.kpi.green::before{background:var(--green)}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:600;line-height:1;margin-bottom:6px}
+.kpi-delta{font-size:11px;color:var(--muted)}
+.kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g31{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;transition:border-color .2s}
+.card:hover{border-color:rgba(255,255,255,.12)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.ct{font-size:13px;font-weight:600}.cs{font-size:11px;color:var(--muted);margin-top:2px}
+.cb{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500}
+.cbb{background:rgba(59,130,246,.15);color:var(--blue)}.cba{background:rgba(245,158,11,.15);color:var(--amber)}
+.cbr{background:rgba(239,68,68,.15);color:var(--red)}.cbg{background:rgba(34,197,94,.15);color:var(--green)}
+canvas{display:block;width:100%!important}
+.ir{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ic{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted)}
+.ic strong{color:var(--text)}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.dt td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.dt tr:hover td{background:rgba(255,255,255,.03)}
+.cd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.bc{display:flex;align-items:center;gap:8px}
+.bm{height:4px;border-radius:2px;min-width:4px}
+.dl{display:flex;flex-direction:column;gap:8px;justify-content:center}
+.li{display:flex;align-items:center;gap:8px;font-size:12px}
+.ls{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.lv{margin-left:auto;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px}
+.hmw{overflow-x:auto}
+.hm{display:grid;grid-template-columns:52px repeat(24,1fr);gap:2px;min-width:600px}
+.hmc{height:22px;border-radius:3px}.hml{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;height:22px}
+.hmh{font-size:10px;color:var(--muted);text-align:center;padding-bottom:4px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">🚗</div>
+    <span class="header-title">Smart City Mobility Intelligence</span>
+    <span class="header-sub">India Urban Ride Analytics · Jan 2023 – Jun 2024</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span style="font-size:12px;color:var(--muted)">499,989 rides · 5 cities · 18 months</span>
+    <div class="live-badge"><span class="live-dot"></span>Dashboard</div>
+  </div>
+</div>
+<div class="filters">
+  <span class="filter-label">City</span>
+  <button class="filter-btn active" onclick="filterCity('all',this)">All cities</button>
+  <button class="filter-btn" onclick="filterCity('Delhi NCR',this)">Delhi NCR</button>
+  <button class="filter-btn" onclick="filterCity('Mumbai',this)">Mumbai</button>
+  <button class="filter-btn" onclick="filterCity('Bengaluru',this)">Bengaluru</button>
+  <button class="filter-btn" onclick="filterCity('Chennai',this)">Chennai</button>
+  <button class="filter-btn" onclick="filterCity('Hyderabad',this)">Hyderabad</button>
+  <span class="filter-label" style="margin-left:8px">Weather</span>
+  <select class="fs" onchange="filterWeather(this.value)">
+    <option value="all">All weather</option>
+    <option value="clear">Clear</option>
+    <option value="light_rain">Light rain</option>
+    <option value="heavy_rain">Heavy rain</option>
+    <option value="fog">Fog</option>
+  </select>
+</div>
+<div class="main">
+  <div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-label">Total rides</div><div class="kpi-value" id="kv1">499,989</div><div class="kpi-delta up">5 cities · 18 months</div></div>
+    <div class="kpi teal"><div class="kpi-label">Avg wait time</div><div class="kpi-value" id="kv2">7.9 min</div><div class="kpi-delta">Median across all rides</div></div>
+    <div class="kpi amber"><div class="kpi-label">Mean surge</div><div class="kpi-value" id="kv3">1.57×</div><div class="kpi-delta down">+84% in heavy rain</div></div>
+    <div class="kpi red"><div class="kpi-label">Cancellation</div><div class="kpi-value" id="kv4">6.2%</div><div class="kpi-delta down">22.9% in heavy rain</div></div>
+    <div class="kpi green"><div class="kpi-label">Median fare</div><div class="kpi-value" id="kv5">₹154</div><div class="kpi-delta up">+60% on festival days</div></div>
+  </div>
+  <div class="g31">
+    <div class="card">
+      <div class="ch"><div><div class="ct">Hourly ride volume</div><div class="cs">Twin rush-hour peaks — 7–9 AM and 5–8 PM</div></div><span class="cb cbb">Demand pattern</span></div>
+      <div style="position:relative;height:200px"><canvas id="hc"></canvas></div>
+      <div class="ir">
+        <div class="ic">Peak hour <strong>6 PM — 56,264 rides</strong></div>
+        <div class="ic">Dead hours <strong>1–4 AM — only 0.8%</strong></div>
+        <div class="ic">Peak hours = <strong>73.4% of all rides</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">City breakdown</div><div class="cs">Share of total rides</div></div></div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="position:relative;height:160px;width:160px;flex-shrink:0"><canvas id="cd"></canvas></div>
+        <div class="dl" id="cleg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div><div class="ct">Monthly ride trend</div><div class="cs">Rides + surge over 18 months</div></div><span class="cb cba">Seasonality</span></div>
+      <div style="position:relative;height:190px"><canvas id="mc"></canvas></div>
+      <div class="ir"><div class="ic">Monsoon Jun–Sep = <strong>highest surge 1.71×</strong></div><div class="ic">Apr 2023 = <strong>IPL spike</strong></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Weather impact on wait time</div><div class="cs">Median wait · Hover for surge + cancel rate</div></div><span class="cb cbr">Risk factor</span></div>
+      <div style="position:relative;height:190px"><canvas id="wc"></canvas></div>
+      <div class="ir"><div class="ic">Heavy rain wait <strong>+152%</strong></div><div class="ic">Surge <strong>+84%</strong></div><div class="ic">Cancellations <strong>22.9%</strong></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div><div class="ct">Demand heatmap — city × hour</div><div class="cs">Darker = higher ride volume · Hover for exact count</div></div><span class="cb cbb">Pattern analysis</span></div>
+    <div class="hmw"><div class="hm" id="hmg"></div></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--muted)">
+      <div style="width:80px;height:6px;border-radius:3px;background:linear-gradient(to right,#1e2535,#3b82f6)"></div>
+      <span>Low demand</span><span style="margin-left:auto">High demand</span>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div><div class="ct">Vehicle type — fare per km</div><div class="cs">Premium costs 4× more than shared</div></div></div>
+      <div style="position:relative;height:200px"><canvas id="vc"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Surge band distribution</div><div class="cs">% of rides by surge level per city</div></div><span class="cb cbr">Surge</span></div>
+      <div style="position:relative;height:200px"><canvas id="sc"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Festival vs normal days</div><div class="cs">Impact on wait time · Hover for fare + surge</div></div><span class="cb cba">Events</span></div>
+      <div style="position:relative;height:200px"><canvas id="fc"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div><div class="ct">City performance metrics</div><div class="cs">Comparative KPIs — click city filter above to drill in</div></div></div>
+      <table class="dt"><thead><tr><th>City</th><th>Rides</th><th>Med. wait</th><th>Med. fare</th><th>Surge</th><th>Completion</th></tr></thead><tbody id="ctb"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Top wait-time hotspot zones</div><div class="cs">Peripheral zones needing fleet rebalancing</div></div><span class="cb cbr">Hotspots</span></div>
+      <table class="dt"><thead><tr><th>Zone</th><th>City</th><th>Avg wait</th><th>Surge</th><th>Volume</th></tr></thead><tbody id="ztb"></tbody></table>
+    </div>
+  </div>
+  <div style="text-align:center;padding:12px 0;color:var(--muted);font-size:11px;border-top:1px solid var(--border)">
+    Smart City Mobility Intelligence System · Built by Avantika ·
+    <a href="https://github.com/Avantika029/smart-city-mobility-intelligence" style="color:var(--blue);text-decoration:none">GitHub ↗</a>
+    · 499,989 rides · 5 cities · 3 ML models · R² = 0.867
+  </div>
+</div>
+<script>
+const CC={'Delhi NCR':'#3b82f6','Mumbai':'#14b8a6','Bengaluru':'#f59e0b','Chennai':'#f97316','Hyderabad':'#a78bfa'};
+const CITIES=['Delhi NCR','Mumbai','Bengaluru','Chennai','Hyderabad'];
+const cs={'Delhi NCR':{rides:118413,wait:7.9,fare:151.7,surge:1.54,completion:0.94},'Mumbai':{rides:113641,wait:8.2,fare:159.7,surge:1.64,completion:0.93},'Bengaluru':{rides:99511,wait:7.7,fare:150.5,surge:1.53,completion:0.94},'Chennai':{rides:86252,wait:8.0,fare:155.6,surge:1.60,completion:0.94},'Hyderabad':{rides:82172,wait:7.7,fare:149.4,surge:1.52,completion:0.94}};
+const hd={0:4973,1:2440,2:1750,3:1441,4:2186,5:5423,6:9176,7:50192,8:53712,9:48832,10:9740,11:9370,12:10952,13:12341,14:10485,15:9773,16:10893,17:52621,18:56264,19:54545,20:51040,21:13464,22:11084,23:7292};
+const md={labels:['Jan 23','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 24','Feb','Mar','Apr','May','Jun 24'],rides:[28420,25519,28262,27605,28167,27334,28083,28462,27497,28477,27384,28243,28408,26487,28549,27375,28446,27271],surge:[1.467,1.432,1.439,1.621,1.484,1.693,1.697,1.730,1.733,1.533,1.569,1.558,1.532,1.437,1.481,1.585,1.483,1.722]};
+const wd={labels:['Clear','Fog','Light rain','Heavy rain'],wait:[7.5,11.5,11.0,18.9],surge:[1.48,1.85,1.98,2.72],cancel:[5.49,7.0,6.98,22.87]};
+const vd={labels:['Bike taxi','Auto','Economy','Premium','Shared'],fpk:[18.21,23.91,33.54,58.33,14.02]};
+const sb={'no_surge':{'Delhi NCR':26002,'Mumbai':22178,'Bengaluru':23569,'Chennai':18349,'Hyderabad':19584},'low':{'Delhi NCR':51001,'Mumbai':44565,'Bengaluru':42533,'Chennai':34966,'Hyderabad':35318},'medium':{'Delhi NCR':22397,'Mumbai':21947,'Bengaluru':17763,'Chennai':16019,'Hyderabad':14710},'high':{'Delhi NCR':14423,'Mumbai':16839,'Bengaluru':11743,'Chennai':11672,'Hyderabad':9618},'extreme':{'Delhi NCR':4590,'Mumbai':8112,'Bengaluru':3903,'Chennai':5246,'Hyderabad':2942}};
+const hmD={'Delhi NCR':[1159,565,429,317,544,1225,2229,11919,12624,11696,2298,2221,2567,2860,2485,2345,2571,12546,13370,12815,12113,3132,2640,1743],'Mumbai':[1119,539,412,326,500,1297,2117,11501,12365,11043,2175,2179,2505,2838,2366,2236,2535,11899,12505,12389,11577,3028,2514,1676],'Bengaluru':[1023,510,373,298,453,1068,1807,9951,10645,9746,1940,1838,2170,2461,2082,1935,2166,10316,11354,10768,10221,2701,2211,1474],'Chennai':[834,445,276,251,370,964,1543,8478,9321,8416,1722,1603,1863,2155,1803,1684,1818,9149,9843,9399,8825,2355,1888,1247],'Hyderabad':[838,381,260,249,319,869,1480,8343,8757,7931,1605,1529,1847,2027,1749,1573,1803,8711,9192,9174,8304,2248,1831,1152]};
+const fd={labels:['Normal day','Festival day'],wait:[8.26,11.75],surge:[1.53,2.48],fare:[193.0,308.7]};
+const tz=[{z:'Chembur',c:'Mumbai',w:11.3,s:1.64,r:5742},{z:'Koyambedu',c:'Chennai',w:11.1,s:1.60,r:4232},{z:'Vashi',c:'Mumbai',w:11.0,s:1.64,r:5681},{z:'Kodambakkam',c:'Chennai',w:10.7,s:1.60,r:4319},{z:'Navi Mumbai',c:'Mumbai',w:10.7,s:1.64,r:5660},{z:'Ghaziabad',c:'Delhi NCR',w:10.5,s:1.53,r:5965},{z:'Malad',c:'Mumbai',w:10.5,s:1.65,r:5758},{z:'Guindy',c:'Chennai',w:10.4,s:1.60,r:4356},{z:'Rajajinagar',c:'Bengaluru',w:10.3,s:1.52,r:5001},{z:'Faridabad',c:'Delhi NCR',w:10.2,s:1.54,r:6016}];
+
+Chart.defaults.color='#7a8099';Chart.defaults.borderColor='rgba(255,255,255,0.06)';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=11;
+
+// Hourly
+new Chart(document.getElementById('hc').getContext('2d'),{type:'bar',data:{labels:Object.keys(hd),datasets:[{data:Object.values(hd).map(v=>Math.round(v/1000*10)/10),backgroundColor:Object.keys(hd).map(h=>[7,8,9,17,18,19,20].includes(+h)?'#3b82f6':'rgba(59,130,246,0.25)'),borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${v.raw}k rides`}}},scales:{x:{ticks:{color:'#7a8099',maxRotation:0},grid:{display:false},border:{display:false}},y:{ticks:{color:'#7a8099',callback:v=>v+'k'},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}}}});
+
+// City donut
+const cr=CITIES.map(c=>cs[c].rides),tr=cr.reduce((a,b)=>a+b,0);
+new Chart(document.getElementById('cd').getContext('2d'),{type:'doughnut',data:{labels:CITIES,datasets:[{data:cr,backgroundColor:CITIES.map(c=>CC[c]),borderWidth:2,borderColor:'#161b27'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${v.label}: ${(v.raw/1000).toFixed(0)}k`}}}}});
+const cl=document.getElementById('cleg');CITIES.forEach(c=>{cl.innerHTML+=`<div class="li"><div class="ls" style="background:${CC[c]}"></div><span>${c}</span><span class="lv">${(cs[c].rides/tr*100).toFixed(1)}%</span></div>`;});
+
+// Monthly
+new Chart(document.getElementById('mc').getContext('2d'),{type:'bar',data:{labels:md.labels,datasets:[{type:'bar',label:'Rides (k)',data:md.rides.map(v=>Math.round(v/1000*10)/10),backgroundColor:'rgba(59,130,246,0.3)',borderRadius:2,borderWidth:0,yAxisID:'y'},{type:'line',label:'Mean surge',data:md.surge,borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,pointRadius:2,yAxisID:'y2',tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:10,padding:12,color:'#7a8099'}}},scales:{x:{ticks:{color:'#7a8099',maxRotation:45,font:{size:9}},grid:{display:false},border:{display:false}},y:{ticks:{color:'#7a8099',callback:v=>v+'k'},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false},position:'left'},y2:{ticks:{color:'#f59e0b'},grid:{display:false},border:{display:false},position:'right',min:1.2,max:2.0}}}});
+
+// Weather
+const wc=['rgba(34,197,94,0.8)','rgba(245,158,11,0.8)','rgba(59,130,246,0.8)','rgba(239,68,68,0.8)'];
+new Chart(document.getElementById('wc').getContext('2d'),{type:'bar',data:{labels:wd.labels,datasets:[{label:'Median wait (min)',data:wd.wait,backgroundColor:wc,borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{afterBody:(items)=>{const i=items[0].dataIndex;return[`Surge: ${wd.surge[i].toFixed(2)}×`,`Cancel rate: ${wd.cancel[i]}%`];}}}},scales:{x:{ticks:{color:'#7a8099'},grid:{display:false},border:{display:false}},y:{ticks:{color:'#7a8099',callback:v=>v+' min'},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}}}});
+
+// Heatmap
+const hmg=document.getElementById('hmg');const av=Object.values(hmD).flat();const mn=Math.min(...av),mx=Math.max(...av);
+function hmc(v){const t=(v-mn)/(mx-mn);return`rgb(${Math.round(30+t*9)},${Math.round(37+t*93)},${Math.round(53+t*193)})`;}
+hmg.innerHTML='<div class="hml"></div>'+Array.from({length:24},(_,h)=>`<div class="hmh">${h}</div>`).join('');
+CITIES.forEach(city=>{hmg.innerHTML+=`<div class="hml" style="font-size:9px;color:${CC[city]}">${city.replace(' NCR','').replace('aluru','').substring(0,6)}</div>`;hmD[city].forEach((val,h)=>{hmg.innerHTML+=`<div class="hmc" style="background:${hmc(val)}" title="${city} ${h}:00 — ${val.toLocaleString()} rides"></div>`;});});
+
+// Vehicle
+const vcols=['#3b82f6','#14b8a6','#f59e0b','#a78bfa','#f97316'];
+new Chart(document.getElementById('vc').getContext('2d'),{type:'bar',data:{labels:vd.labels,datasets:[{label:'₹/km',data:vd.fpk,backgroundColor:vcols,borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a8099',callback:v=>'₹'+v},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}},y:{ticks:{color:'#7a8099'},grid:{display:false},border:{display:false}}}}});
+
+// Surge bands
+const bc={'no_surge':'#22c55e','low':'#3b82f6','medium':'#f59e0b','high':'#f97316','extreme':'#ef4444'};
+const bl={'no_surge':'No surge','low':'Low','medium':'Medium','high':'High','extreme':'Extreme'};
+const st=CITIES.map(c=>Object.values(sb).reduce((s,b)=>s+b[c],0));
+new Chart(document.getElementById('sc').getContext('2d'),{type:'bar',data:{labels:CITIES.map(c=>c.replace(' NCR','').replace('aluru','').substring(0,7)),datasets:Object.entries(sb).map(([band,vals])=>({label:bl[band],data:CITIES.map((c,i)=>Math.round(vals[c]/st[i]*100)),backgroundColor:bc[band],borderWidth:0,borderRadius:0}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:8,padding:8,color:'#7a8099',font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:'#7a8099',font:{size:10}},grid:{display:false},border:{display:false}},y:{stacked:true,ticks:{color:'#7a8099',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}}}});
+
+// Festival
+new Chart(document.getElementById('fc').getContext('2d'),{type:'bar',data:{labels:fd.labels,datasets:[{label:'Avg wait (min)',data:fd.wait,backgroundColor:['rgba(59,130,246,0.6)','rgba(245,158,11,0.85)'],borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{afterBody:(items)=>{const i=items[0].dataIndex;return[`Surge: ${fd.surge[i].toFixed(2)}×`,`Avg fare: ₹${fd.fare[i]}`];}}}},scales:{x:{ticks:{color:'#7a8099'},grid:{display:false},border:{display:false}},y:{ticks:{color:'#7a8099',callback:v=>v+' min'},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}}}});
+
+// City table
+const ctb=document.getElementById('ctb');const mr=Math.max(...CITIES.map(c=>cs[c].rides));
+CITIES.forEach(c=>{const s=cs[c];const bw=Math.round(s.rides/mr*80);ctb.innerHTML+=`<tr><td><span class="cd" style="background:${CC[c]}"></span>${c}</td><td><div class="bc"><div class="bm" style="width:${bw}px;background:${CC[c]}"></div>${(s.rides/1000).toFixed(0)}k</div></td><td>${s.wait} min</td><td>₹${s.fare}</td><td>${s.surge.toFixed(2)}×</td><td>${(s.completion*100).toFixed(0)}%</td></tr>`;});
+
+// Zone table
+const ztb=document.getElementById('ztb');
+tz.forEach(z=>{const bw=Math.round(z.w/12*70);const sc=z.s>=1.6?'cbr':z.s>=1.55?'cba':'cbg';ztb.innerHTML+=`<tr><td>${z.z}</td><td><span class="cd" style="background:${CC[z.c]}"></span>${z.c}</td><td><div class="bc"><div class="bm" style="width:${bw}px;background:#ef4444"></div>${z.w.toFixed(1)} min</div></td><td><span class="cb ${sc}">${z.s.toFixed(2)}×</span></td><td>${z.r.toLocaleString()}</td></tr>`;});
+
+// Filters
+function filterCity(city,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(city==='all'){document.getElementById('kv1').textContent='499,989';document.getElementById('kv2').textContent='7.9 min';document.getElementById('kv3').textContent='1.57×';document.getElementById('kv4').textContent='6.2%';document.getElementById('kv5').textContent='₹154';}else{const s=cs[city];document.getElementById('kv1').textContent=s.rides.toLocaleString();document.getElementById('kv2').textContent=s.wait+' min';document.getElementById('kv3').textContent=s.surge.toFixed(2)+'×';document.getElementById('kv4').textContent=((1-s.completion)*100).toFixed(1)+'%';document.getElementById('kv5').textContent='₹'+s.fare;}}
+function filterWeather(w){const wm={'all':7.9,'clear':7.5,'light_rain':11.0,'heavy_rain':18.9,'fog':11.5};const sm={'all':1.57,'clear':1.48,'light_rain':1.98,'heavy_rain':2.72,'fog':1.85};document.getElementById('kv2').textContent=wm[w]+' min';document.getElementById('kv3').textContent=sm[w].toFixed(2)+'×';}
+</script>
+</body>
+</html>
